@@ -36,9 +36,9 @@ This repository supports the evaluations of:
 
 ## Installation
 
-This repository has been tested on Ubuntu and requires **Python 3.9+** and **PyTorch 2.5.1 or later**. Follow the steps below to set up the environment:
+This repository has been tested on Ubuntu, and requires **Python 3.9+** with **PyTorch 2.5.1+**. Follow the steps below to set up the environment:
 
-### 1. Recommend Setup
+### 1. Recommended Setup
 
 We recommend using a [miniforge](https://github.com/conda-forge/miniforge) environment.
 
@@ -58,7 +58,7 @@ pip install -e .
 
 Download [music_speech_audioset_epoch_15_esc_89.98.pt](https://huggingface.co/lukewys/laion_clap/resolve/main/music_speech_audioset_epoch_15_esc_89.98.pt) and [Synchformer](https://github.com/hkchengrex/MMAudio/releases/download/v0.1/synchformer_state_dict.pth) and put them in `weights`.
 
-(Execute the following when you are in the root directory of this repository)
+(Alternatively, execute the following when you are in the root directory of this repository)
 
 ```bash
 mkdir weights
@@ -71,7 +71,7 @@ wget https://github.com/hkchengrex/MMAudio/releases/download/v0.1/synchformer_st
 If you plan to evaluate on videos, you will also need `ffmpeg`. Note that torchaudio imposes a maximum version limit (`ffmpeg<7`). You can install it as follows:
 
 ```bash
-conda install -c conda-forge 'ffmpeg<7
+conda install -c conda-forge 'ffmpeg<7'
 ```
 
 ## Usage
