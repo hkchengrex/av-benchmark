@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import laion_clap
@@ -11,10 +12,11 @@ from msclap import CLAP
 from av_bench.panns import Cnn14
 from av_bench.synchformer.synchformer import Synchformer
 from av_bench.vggish.vggish import VGGish
+from av_bench.utils import resolve_ckpt
 
-_clap_ckpt_path = Path(
-    __file__).parent.parent / 'weights' / 'music_speech_audioset_epoch_15_esc_89.98.pt'
-_syncformer_ckpt_path = Path(__file__).parent.parent / 'weights' / 'synchformer_state_dict.pth'
+home_dir = os.path.expanduser("~")
+_clap_ckpt_path = Path(home_dir) / '.cache' / 'av-benchmark' / 'weights' / 'music_speech_audioset_epoch_15_esc_89.98.pt'
+_syncformer_ckpt_path =  Path(home_dir) / '.cache' / 'av-benchmark' / 'weights' / 'synchformer_state_dict.pth'
 
 
 class ExtractionModels(nn.Module):
@@ -45,12 +47,12 @@ class ExtractionModels(nn.Module):
         self.imagebind = imagebind_model.imagebind_huge(pretrained=True).eval()
 
         self.laion_clap = laion_clap.CLAP_Module(enable_fusion=False, amodel='HTSAT-base').eval()
-        self.laion_clap.load_ckpt(_clap_ckpt_path, verbose=False)
+        self.laion_clap.load_ckpt(resolve_ckpt(_clap_ckpt_path), verbose=False)
 
         self.ms_clap = CLAP(version='2023', use_cuda=True)
 
         self.synchformer = Synchformer().eval()
-        sd = torch.load(_syncformer_ckpt_path, weights_only=True)
+        sd = torch.load(resolve_ckpt(_syncformer_ckpt_path), weights_only=True)
         self.synchformer.load_state_dict(sd)
 
         # from synchformer

@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from torchlibrosa.augmentation import SpecAugmentation
 from torchlibrosa.stft import LogmelFilterBank, Spectrogram
 
+from av_bench.utils import resolve_ckpt
 from av_bench.panns.pytorch_utils import (do_mixup, interpolate, pad_framewise_output)
 
 
@@ -245,13 +246,12 @@ class Cnn14(nn.Module):
 
         # self.init_weight()
         if sample_rate == 16000:
-            state_dict = torch.load("%s/.cache/audioldm_eval/ckpt/Cnn14_16k_mAP=0.438.pth" %
-                                    home_dir,
+            state_dict = torch.load(resolve_ckpt("%s/.cache/audioldm_eval/ckpt/Cnn14_16k_mAP=0.438.pth" % home_dir),
                                     map_location="cpu",
                                     weights_only=False)
             self.load_state_dict(state_dict["model"])
         elif sample_rate == 32000:
-            state_dict = torch.load("%s/.cache/audioldm_eval/ckpt/Cnn14_mAP=0.431.pth" % home_dir,
+            state_dict = torch.load(resolve_ckpt("%s/.cache/audioldm_eval/ckpt/Cnn14_mAP=0.431.pth" % home_dir),
                                     map_location="cpu",
                                     weights_only=False)
             self.load_state_dict(state_dict["model"])
@@ -3138,7 +3138,7 @@ class Cnn14_16k(nn.Module):
 
         # self.init_weight()
         home_dir = os.path.expanduser("~")
-        if not os.path.exist("%s/.cache/audioldm_eval/ckpt/Cnn14_mAP=0.431.pth" % home_dir):
+        if not os.path.exists("%s/.cache/audioldm_eval/ckpt/Cnn14_mAP=0.431.pth" % home_dir):
             print("Download pretrained checkpoints of Cnn14.")
             os.makedirs("ckpt", exist_ok=True)
             os.system("wget -P %s/.cache/audioldm_eval/ckpt/ %s" %
@@ -3149,12 +3149,11 @@ class Cnn14_16k(nn.Module):
 
         # self.init_weight()
         if sample_rate == 16000:
-            state_dict = torch.load("%s/.cache/audioldm_eval/ckpt/Cnn14_16k_mAP=0.438.pth" %
-                                    home_dir,
+            state_dict = torch.load(resolve_ckpt("%s/.cache/audioldm_eval/ckpt/Cnn14_16k_mAP=0.438.pth" % home_dir),
                                     weights_only=False)
             self.load_state_dict(state_dict["model"])
         elif sample_rate == 32000:
-            state_dict = torch.load("%s/.cache/audioldm_eval/ckpt/Cnn14_mAP=0.431.pth" % home_dir,
+            state_dict = torch.load(resolve_ckpt("%s/.cache/audioldm_eval/ckpt/Cnn14_mAP=0.431.pth" % home_dir),
                                     weights_only=False)
             self.load_state_dict(state_dict["model"])
 
