@@ -68,7 +68,11 @@ wget https://github.com/hkchengrex/MMAudio/releases/download/v0.1/synchformer_st
 
 ### 5. Optional: For Video Evaluation
 
-If you plan to evaluate on videos, you will also need `ffmpeg`. Note that torchaudio imposes a maximum version limit (`ffmpeg<7`). You can install it as follows:
+If you plan to evaluate on videos, you will also need `ffmpeg`. 
+For video decoding, `torio` is the default backend because it is the best option for backward compatibility with the existing results.
+If you use `torch>=2.9`, we automatically switch to the `pyav` backend, and the torchaudio `ffmpeg<7` version limit does not apply in that case.
+On a small-scale test, we observed matching outputs between `torio` and `pyav`, but we do not guarantee identical results in all environments or datasets.
+You can install it as follows:
 
 ```bash
 conda install -c conda-forge 'ffmpeg<7'
