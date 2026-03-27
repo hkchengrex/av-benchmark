@@ -1,7 +1,72 @@
+from pathlib import Path
+from typing import Optional, Union
 from collections import defaultdict
-from typing import Literal, Optional
+from urllib.request import urlretrieve
 
 import torch
+from tqdm import tqdm
+
+
+CKPT2URL = {
+    'music_speech_audioset_epoch_15_esc_89.98.pt': 'https://huggingface.co/lukewys/laion_clap/resolve/main/music_speech_audioset_epoch_15_esc_89.98.pt',
+    'synchformer_state_dict.pth': 'https://github.com/hkchengrex/MMAudio/releases/download/v0.1/synchformer_state_dict.pth',
+    'Cnn14_16k_mAP=0.438.pth': 'https://zenodo.org/records/3987831/files/Cnn14_16k_mAP=0.438.pth',
+    'Cnn14_mAP=0.431.pth': 'https://zenodo.org/records/3987831/files/Cnn14_mAP=0.431.pth'
+}
+
+
+def resolve_ckpt(ckpt: Union[str, Path]) -> Path:
+    ckpt_path = Path(ckpt)
+
+    if not ckpt_path.exists():
+        if ckpt_path.name not in CKPT2URL:
+            raise ValueError(f"Unknown checkpoint name: {ckpt_path.name}")
+        url = CKPT2URL[ckpt_path.name]
+        print(f"Downloading checkpoint from {url}")
+        ckpt_path.parent.mkdir(parents=True, exist_ok=True)
+        download(url, ckpt_path)
+
+    assert ckpt_path.exists(), f"Checkpoint not found at {ckpt_path}"
+    if ckpt_path.is_file():
+        return ckpt_path
+    else:
+        raise ValueError(f"Invalid checkpoint path: {ckpt_path}")
+
+
+def download(url: str, path: Path) -> None:
+    filename = url.split("/")[-1]
+    with TqdmUpTo(
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        miniters=1,
+        desc=f"Downloading {filename}",
+    ) as t:
+        urlretrieve(url, path, reporthook=t.update_to, data=None)
+
+
+class TqdmUpTo(tqdm):
+    """
+    Adapted from: https://gist.github.com/leimao/37ff6e990b3226c2c9670a2cd1e4a6f5
+
+    Alternative Class-based version of tqdm.
+    Provides `update_to(n)` which uses `tqdm.update(delta_n)`.
+    Inspired by [twine#242](https://github.com/pypa/twine/pull/242),
+    [here](https://github.com/pypa/twine/commit/42e55e06).
+    """
+
+    def update_to(self, b=1, bsize=1, tsize=None):
+        """
+        b  : int, optional
+            Number of blocks transferred so far [default: 1].
+        bsize  : int, optional
+            Size of each block (in tqdm units) [default: 1].
+        tsize  : int, optional
+            Total size (in tqdm units). If [default: None] remains unchanged.
+        """
+        if tsize is not None:
+            self.total = tsize
+        self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
 
 def clean_sample_name(sample_name: str) -> str:
@@ -84,8 +149,12 @@ def unroll_paired_dict_with_key(gt_d: dict,
 
 def unroll_paired_dict(gt_dict: dict,
                        pred_dict: dict,
-                       cat: bool = False) -> tuple[torch.Tensor, torch.Tensor, list]:
-    pred_keys_to_sample = {k: clean_sample_name(k) for k in pred_dict.keys()}
+                       cat: bool = False,
+                       clean_sample_names: bool = False) -> tuple[torch.Tensor, torch.Tensor, list]:
+    if clean_sample_names:
+        pred_keys_to_sample = {k: clean_sample_name(k) for k in pred_dict.keys()}
+    else:
+        pred_keys_to_sample = {k: k for k in pred_dict.keys()}
     unpaired_samples = set(gt_dict.keys()) ^ set(pred_keys_to_sample.values())
 
     gt_out_list = []

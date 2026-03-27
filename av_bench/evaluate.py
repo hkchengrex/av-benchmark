@@ -1,3 +1,4 @@
+import os
 import logging
 from pathlib import Path
 from typing import Dict
@@ -9,9 +10,10 @@ from tqdm import tqdm
 from av_bench.metrics import compute_fd, compute_isc, compute_kl
 from av_bench.synchformer.synchformer import Synchformer, make_class_grid
 from av_bench.utils import (unroll_dict, unroll_dict_all_keys, unroll_paired_dict,
-                            unroll_paired_dict_with_key)
+                            unroll_paired_dict_with_key, resolve_ckpt)
 
-_syncformer_ckpt_path = Path(__file__).parent.parent / 'weights' / 'synchformer_state_dict.pth'
+home_dir = os.path.expanduser("~")
+_syncformer_ckpt_path =  Path(home_dir) / '.cache' / 'av-benchmark' / 'weights' / 'synchformer_state_dict.pth'
 log = logging.getLogger()
 device = 'cuda'
 
@@ -23,10 +25,11 @@ def evaluate(gt_audio_cache: Path,
              is_paired: bool = True,
              num_samples: int = 1,
              skip_video_related: bool = False,
-             skip_clap: bool = False) -> Dict[str, float]:
+             skip_clap: bool = False,
+             clean_sample_names: bool = False) -> Dict[str, float]:
 
     sync_model = Synchformer().to(device).eval()
-    sd = torch.load(_syncformer_ckpt_path, weights_only=True)
+    sd = torch.load(resolve_ckpt(_syncformer_ckpt_path), weights_only=True)
     sync_model.load_state_dict(sd)
 
     gt_audio_cache = gt_audio_cache.expanduser()
@@ -57,7 +60,7 @@ def evaluate(gt_audio_cache: Path,
             ib_audio_features = torch.load(pred_audio_cache / 'imagebind_audio.pth',
                                            weights_only=True)
             paired_ib_video_features, paired_ib_audio_features, unpaired_ib_keys = unroll_paired_dict(
-                ib_video_features, ib_audio_features)
+                ib_video_features, ib_audio_features, clean_sample_names=clean_sample_names)
             log.info(f'Unpaired IB features keys: {unpaired_ib_keys}')
         else:
             paired_ib_video_features = paired_ib_audio_features = None
@@ -69,7 +72,7 @@ def evaluate(gt_audio_cache: Path,
             sync_audio_features = torch.load(pred_audio_cache / 'synchformer_audio.pth',
                                              weights_only=True)
             paired_sync_video_features, paired_sync_audio_features, unpaired_sync_keys = unroll_paired_dict(
-                sync_video_features, sync_audio_features)
+                sync_video_features, sync_audio_features, clean_sample_names=clean_sample_names)
             log.info(f'Unpaired Synchformer features keys: {unpaired_sync_keys}')
         else:
             paired_sync_video_features = paired_sync_audio_features = None
@@ -81,7 +84,7 @@ def evaluate(gt_audio_cache: Path,
             laion_clap_audio_features = torch.load(pred_audio_cache / 'clap_laion_audio.pth',
                                                    weights_only=True)
             paired_laion_clap_text_features, paired_laion_clap_audio_features, unpaired_laion_clap_keys = unroll_paired_dict(
-                laion_clap_text_features, laion_clap_audio_features)
+                laion_clap_text_features, laion_clap_audio_features, clean_sample_names=clean_sample_names)
             log.info(f'Unpaired LAION CLAP features keys: {unpaired_laion_clap_keys}')
 
             ms_clap_text_features = torch.load(gt_audio_cache / 'clap_ms_text.pth',
@@ -89,7 +92,7 @@ def evaluate(gt_audio_cache: Path,
             ms_clap_audio_features = torch.load(pred_audio_cache / 'clap_ms_audio.pth',
                                                 weights_only=True)
             paired_ms_clap_text_features, paired_ms_clap_audio_features, unpaired_ms_clap_keys = unroll_paired_dict(
-                ms_clap_text_features, ms_clap_audio_features)
+                ms_clap_text_features, ms_clap_audio_features, clean_sample_names=clean_sample_names)
             log.info(f'Unpaired MS CLAP features keys: {unpaired_ms_clap_keys}')
         else:
             paired_laion_clap_text_features = paired_laion_clap_audio_features = None
@@ -104,11 +107,11 @@ def evaluate(gt_audio_cache: Path,
 
     if is_paired:
         gt_passt_features, pred_passt_features, unpaired_passt_keys = unroll_paired_dict(
-            gt_passt_features, pred_passt_features)
+            gt_passt_features, pred_passt_features, clean_sample_names=clean_sample_names)
         log.info(f'Unpaired PASST features keys: {unpaired_passt_keys}')
 
         gt_passt_logits, pred_passt_logits, unpaired_passt_keys = unroll_paired_dict(
-            gt_passt_logits, pred_passt_logits)
+            gt_passt_logits, pred_passt_logits, clean_sample_names=clean_sample_names)
         log.info(f'Unpaired PASST logits keys: {unpaired_passt_keys}')
 
     else:
